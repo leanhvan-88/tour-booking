@@ -4,6 +4,7 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Tour;
 use App\Models\Booking;
 
@@ -41,6 +42,10 @@ class BookingController extends Controller
         $data['child_count'] = $data['child_count'] ?? 0;
         $data['status'] = 'pending';
 
+        if (Auth::check()) {
+            $data['user_id'] = Auth::id();
+        }
+
         Booking::create($data);
 
         return redirect()
@@ -53,7 +58,14 @@ class BookingController extends Controller
      */
     public function index()
     {
-        $bookings = Booking::latest()->paginate(10);
+        if (!Auth::check()) {
+            return redirect()->route('user.login');
+        }
+
+        $bookings = Booking::with('tour')
+            ->where('user_id', Auth::id())
+            ->latest()
+            ->paginate(10);
 
         return view('user.booking.index', compact('bookings'));
     }
@@ -63,7 +75,14 @@ class BookingController extends Controller
      */
     public function show($id)
     {
-        $booking = Booking::with('tour')->findOrFail($id);
+        if (!Auth::check()) {
+            return redirect()->route('user.login');
+        }
+
+        $booking = Booking::with('tour')
+            ->where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
 
         return view('user.booking.show', compact('booking'));
     }
@@ -73,7 +92,13 @@ class BookingController extends Controller
      */
     public function cancel($id)
     {
-        $booking = Booking::findOrFail($id);
+        if (!Auth::check()) {
+            return redirect()->route('user.login');
+        }
+
+        $booking = Booking::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
 
         if ($booking->status !== 'pending') {
             return back()->with('error', 'Không thể hủy');
