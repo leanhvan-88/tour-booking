@@ -18,6 +18,21 @@
             <span>Đơn đặt tour</span>
         </a>
 
+        <a href="{{ route('admin.categories.index') }}" class="menu-item">
+            <i class="ri-folder-3-line"></i>
+            <span>Danh mục</span>
+        </a>
+
+        <a href="{{ route('admin.reviews.index') }}" class="menu-item">
+            <i class="ri-star-line"></i>
+            <span>Đánh giá</span>
+        </a>
+
+        <a href="{{ route('admin.payments.index') }}" class="menu-item">
+            <i class="ri-bank-card-line"></i>
+            <span>Thanh toán</span>
+        </a>
+
     </div>
 
     <!-- Phần dưới cùng của sidebar -->
