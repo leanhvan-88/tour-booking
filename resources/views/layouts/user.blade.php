@@ -35,9 +35,30 @@
         <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}">Trang chủ</a>
         <a href="{{ route('tours.index') }}" class="{{ request()->routeIs('tours.*') ? 'active' : '' }}">Tour du lịch</a>
         <a href="{{ route('about') }}" class="{{ request()->routeIs('about') ? 'active' : '' }}">Giới thiệu</a>
+
+        @auth
+            <a href="{{ route('booking.index') }}" class="{{ request()->routeIs('booking.*') ? 'active' : '' }}">Đơn của tôi</a>
+            <form method="POST" action="{{ route('user.logout') }}" style="margin-top: 8px;">
+                @csrf
+                <button type="submit" style="background:none; border:none; padding:0; color:inherit; cursor:pointer;">Đăng xuất</button>
+            </form>
+        @else
+            <a href="{{ route('user.login') }}" class="{{ request()->routeIs('user.login') ? 'active' : '' }}">Đăng nhập</a>
+            <a href="{{ route('user.register') }}" class="{{ request()->routeIs('user.register') ? 'active' : '' }}">Đăng ký</a>
+        @endauth
     </div>
 
     <div>
+        @auth
+            <a href="{{ route('booking.index') }}" style="margin-right: 12px;">Đơn của tôi</a>
+            <form method="POST" action="{{ route('user.logout') }}" style="display:inline;">
+                @csrf
+                <button type="submit" style="background:#0ea5e9; color:white; border:none; padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600;">Đăng xuất</button>
+            </form>
+        @else
+            <a href="{{ route('user.login') }}" style="margin-right: 12px;">Đăng nhập</a>
+            <a href="{{ route('user.register') }}" style="background:#0ea5e9; color:white; padding:8px 12px; border-radius:10px; text-decoration:none; font-weight:600;">Đăng ký</a>
+        @endauth
     </div>
 </div>
 

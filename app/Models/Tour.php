@@ -17,8 +17,6 @@ class Tour extends Model
         'itinerary'
     ];
 
-
-
     /**
      * Nếu không có ảnh thì fallback
      */
@@ -33,5 +31,15 @@ class Tour extends Model
     public function bookings()
     {
         return $this->hasMany(\App\Models\Booking::class);
+    }
+
+    public function categories()
+    {
+        return $this->belongsToMany(Category::class);
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
     }
 }

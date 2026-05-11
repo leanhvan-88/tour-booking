@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\Admin\StoreTourRequest;
+use App\Http\Requests\Admin\UpdateTourRequest;
+use App\Models\Category;
 use App\Models\Tour;
 
 class TourController extends Controller
@@ -13,30 +15,52 @@ class TourController extends Controller
      */
     public function index()
     {
-        $tours = Tour::latest()->paginate(10);
+        $tours = Tour::with('categories')->latest()->paginate(10);
 
         return view('admin.tours.index', compact('tours'));
+    }
+
+    public function create()
+    {
+        $categories = Category::query()->orderBy('name')->get();
+
+        return view('admin.tours.create', compact('categories'));
+    }
+
+    public function show(Tour $tour)
+    {
+        $tour->load('categories');
+
+        return view('admin.tours.show', compact('tour'));
+    }
+
+    public function edit(Tour $tour)
+    {
+        $tour->load('categories');
+        $categories = Category::query()->orderBy('name')->get();
+
+        return view('admin.tours.edit', compact('tour', 'categories'));
     }
 
     /**
      * Tạo tour
      */
-    public function store(Request $request)
+    public function store(StoreTourRequest $request)
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'duration' => 'required|integer|min:1',
-            'departure' => 'required|string|max:255',
-            'destination' => 'required|string|max:255',
-            'price' => 'nullable|numeric|min:0',
-            'image' => 'nullable|url',
-            'description' => 'nullable|string',
+        $data = $request->validated();
 
-            // ✅ TEXT chứ không phải array nữa
-            'itinerary' => 'nullable|string',
+        $tour = Tour::create([
+            'name' => $data['name'],
+            'duration' => $data['duration'],
+            'departure' => $data['departure'],
+            'destination' => $data['destination'],
+            'price' => $data['price'] ?? null,
+            'image' => $data['image'] ?? null,
+            'description' => $data['description'] ?? null,
+            'itinerary' => $data['itinerary'] ?? null,
         ]);
 
-        Tour::create($data);
+        $tour->categories()->sync(isset($data['category_id']) ? [$data['category_id']] : []);
 
         return redirect()
             ->route('admin.tours.index')
@@ -46,24 +70,22 @@ class TourController extends Controller
     /**
      * Cập nhật tour
      */
-    public function update(Request $request, $id)
+    public function update(UpdateTourRequest $request, Tour $tour)
     {
-        $tour = Tour::findOrFail($id);
+        $data = $request->validated();
 
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'duration' => 'required|integer|min:1',
-            'departure' => 'required|string|max:255',
-            'destination' => 'required|string|max:255',
-            'price' => 'nullable|numeric|min:0',
-            'image' => 'nullable|url',
-            'description' => 'nullable|string',
-
-            // ✅ TEXT
-            'itinerary' => 'nullable|string',
+        $tour->update([
+            'name' => $data['name'],
+            'duration' => $data['duration'],
+            'departure' => $data['departure'],
+            'destination' => $data['destination'],
+            'price' => $data['price'] ?? null,
+            'image' => $data['image'] ?? null,
+            'description' => $data['description'] ?? null,
+            'itinerary' => $data['itinerary'] ?? null,
         ]);
 
-        $tour->update($data);
+        $tour->categories()->sync(isset($data['category_id']) ? [$data['category_id']] : []);
 
         return redirect()
             ->route('admin.tours.index')
@@ -73,13 +95,29 @@ class TourController extends Controller
     /**
      * Xóa tour
      */
-    public function destroy($id)
+    public function destroy(Tour $tour)
     {
-        $tour = Tour::findOrFail($id);
         $tour->delete();
 
         return redirect()
             ->route('admin.tours.index')
             ->with('success', 'Xóa thành công');
+    }
+
+    private function parseItinerary(?string $raw): ?array
+    {
+        if ($raw === null) {
+            return null;
+        }
+
+        $raw = trim($raw);
+        if ($raw === '') {
+            return null;
+        }
+
+        $lines = preg_split("/\\r\\n|\\r|\\n/", $raw);
+        $items = array_values(array_filter(array_map('trim', $lines), fn ($v) => $v !== ''));
+
+        return $items === [] ? null : $items;
     }
 }
